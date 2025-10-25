@@ -1,0 +1,36 @@
+.summary-container {
+  background: white;
+  border-radius: 12px;
+  padding: 40px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.summary-header {
+  margin-bottom: 30px;
+  text-align: center;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 20px;
+}
+
+.summary-header h2 {
+  color: #333;
+  font-size: 28px;
+  margin: 0 0 10px 0;
+}
+
+.summary-content {
+  line-height: 1.8;
+  color: #444;
+}
+
+.summary-content p {
+  margin-bottom: 16px;
+  font-size: 16px;
+  text-align: justify;
+}
+
+.summary-content p:last-child {
+  margin-bottom: 0;
+}

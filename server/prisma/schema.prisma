@@ -1,0 +1,99 @@
+// This is your Prisma schema file.
+// datasource db defines the database connection.
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// generator client defines the Prisma Client.
+generator client {
+  provider = "prisma-client-js"
+}
+
+// 1. User Model
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String // This will be a bcrypt hash
+  courses   Course[]
+  groups    GroupMember[]
+  messages  Message[]
+  createdAt DateTime @default(now())
+}
+
+// 2. Course Model
+model Course {
+  id        String     @id @default(uuid())
+  name      String
+  user      User       @relation(fields: [userId], references: [id])
+  userId    String
+  materials Material[]
+  createdAt DateTime   @default(now())
+}
+
+// 3. Material Model (The uploaded file)
+model Material {
+  id        String     @id @default(uuid())
+  filename  String
+  status    String     @default("PENDING") // PENDING, PROCESSING, COMPLETED, ERROR
+  course    Course     @relation(fields: [courseId], references: [id])
+  courseId  String
+  aiData    AiData?    // One-to-one relationship with AiData
+  flashcards Flashcard[]
+  createdAt DateTime   @default(now())
+}
+
+// 4. AI Data Model (Generated content)
+model AiData {
+  id          String   @id @default(uuid())
+  summary     String
+  keywords    String[] // PostgreSQL TEXT[] array for keywords
+  material    Material @relation(fields: [materialId], references: [id])
+  materialId  String   @unique // Enforces one-to-one
+  createdAt   DateTime @default(now())
+}
+
+// 5. Flashcard Model
+model Flashcard {
+  id         String   @id @default(uuid())
+  question   String
+  answer     String
+  material   Material @relation(fields: [materialId], references: [id])
+  materialId String
+  createdAt  DateTime @default(now())
+}
+
+// 6. Group Model
+model Group {
+  id          String        @id @default(uuid())
+  name        String
+  description String?
+  members     GroupMember[]
+  messages    Message[]
+  createdAt   DateTime      @default(now())
+}
+
+// 7. Group Member (Junction Table for Many-to-Many)
+model GroupMember {
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  group     Group    @relation(fields: [groupId], references: [id])
+  groupId   String
+  joinedAt  DateTime @default(now())
+
+  @@id([userId, groupId]) // Composite primary key
+}
+
+// 8. Message Model (Group Chat Messages)
+model Message {
+  id        String   @id @default(uuid())
+  content   String
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  group     Group    @relation(fields: [groupId], references: [id])
+  groupId   String
+  createdAt DateTime @default(now())
+
+  @@index([groupId, createdAt]) // Index for efficient message retrieval
+}
