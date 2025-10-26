@@ -48,24 +48,19 @@ app.set('prisma', prisma);
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
-  console.log('Client connected:', socket.id);
-
   // Join user's personal notification room
   socket.on('join', (userId) => {
     socket.join(userId);
-    console.log(`User ${userId} joined their personal room`);
   });
 
   // Join a group chat room
   socket.on('join_group_room', (groupId) => {
     socket.join(`group_${groupId}`);
-    console.log(`Socket ${socket.id} joined group room: group_${groupId}`);
   });
 
   // Leave a group chat room
   socket.on('leave_group_room', (groupId) => {
     socket.leave(`group_${groupId}`);
-    console.log(`Socket ${socket.id} left group room: group_${groupId}`);
   });
 
   // Handle user typing indicator (optional)
@@ -78,7 +73,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    console.log('Client disconnected:', socket.id);
+    // Connection closed
   });
 });
 

@@ -50,7 +50,6 @@ router.get('/groups/recommendations', authenticateToken, async (req, res) => {
     }
 
     const userKeywordsArray = Array.from(userKeywords);
-    console.log(`🔍 User ${userId} has ${userKeywordsArray.length} unique keywords`);
 
     // Step 2: Find other users with overlapping keywords
     // Get all materials from other users that have overlapping keywords
@@ -107,7 +106,6 @@ router.get('/groups/recommendations', authenticateToken, async (req, res) => {
     }
 
     const similarUserIds = Array.from(userOverlap.keys());
-    console.log(`🤝 Found ${similarUserIds.length} similar users`);
 
     // Step 3: Find groups that similar users are in
     const groups = await prisma.group.findMany({
@@ -164,7 +162,6 @@ router.get('/groups/recommendations', authenticateToken, async (req, res) => {
       .filter(g => g !== null) // Remove groups user is already in
       .sort((a, b) => b.relevanceScore - a.relevanceScore); // Sort by most relevant
 
-    console.log(`📊 Returning ${recommendations.length} recommended groups`);
     res.status(200).json(recommendations);
 
   } catch (error) {
@@ -214,7 +211,6 @@ router.post('/groups/:id/join', authenticateToken, async (req, res) => {
       }
     });
 
-    console.log(`✅ User ${userId} joined group ${groupId}`);
     res.status(201).json({
       userId: membership.userId,
       groupId: membership.groupId,
@@ -324,7 +320,6 @@ router.post('/groups', authenticateToken, async (req, res) => {
       }
     });
 
-    console.log(`✅ User ${userId} created group ${group.id}: "${group.name}"`);
     res.status(201).json({
       id: group.id,
       name: group.name,
@@ -444,7 +439,6 @@ router.post('/groups/:id/messages', authenticateToken, async (req, res) => {
     // Emit real-time event to all users in the group room
     io.to(`group_${groupId}`).emit('new_message', message);
 
-    console.log(`📨 Message sent to group ${groupId} by user ${userId}`);
     res.status(201).json(message);
 
   } catch (error) {

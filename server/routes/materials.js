@@ -119,8 +119,6 @@ router.post('/courses/:id/upload', authenticateToken, upload.single('file'), asy
  */
 async function processFileInBackground(filePath, materialId, userId, prisma, io) {
   try {
-    console.log(`🔄 Starting background processing for material ${materialId}`);
-
     // Step 1: Read and parse the file (Same as before)
     let rawText = '';
     const fileExt = path.extname(filePath).toLowerCase();
@@ -156,20 +154,15 @@ async function processFileInBackground(filePath, materialId, userId, prisma, io)
       throw new Error('No text content found in file');
     }
 
-    console.log(`📄 Extracted ${rawText.length} characters from file`);
-
     // ======================================================================
     // === FIX: Make only ONE call to the AI
     // ======================================================================
-    console.log('🤖 Calling Gemini API (single call)...');
     
     // This one function returns an object: { summary, keywords, flashcards }
     const aiData = await generateAiContent(rawText);
 
     // ======================================================================
     
-    console.log(`✅ AI processing complete: ${aiData.keywords.length} keywords, ${aiData.flashcards.length} flashcards`);
-
     // Step 4: Database transaction
     await prisma.$transaction(async (tx) => {
       // Create AiData record
@@ -205,12 +198,9 @@ async function processFileInBackground(filePath, materialId, userId, prisma, io)
       status: 'COMPLETED'
     });
 
-    console.log(`📡 Notification sent to user ${userId}`);
-
     // Step 6: Clean up uploaded file
     try {
       await fs.promises.unlink(filePath);
-      console.log('🗑️  Temporary file deleted');
     } catch (unlinkError) {
       console.error('Error deleting temporary file:', unlinkError);
     }
@@ -329,6 +319,45 @@ router.get('/materials/:id/flashcards', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Get flashcards error:', error);
     res.status(500).json({ error: 'Failed to fetch flashcards.' });
+  }
+});
+
+/**
+ * DELETE /api/materials/:id
+ * Delete a material and all related data (aiData, flashcards)
+ */
+router.delete('/materials/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id: materialId } = req.params;
+    const userId = req.user.userId;
+    const prisma = req.app.get('prisma');
+
+    // Find material and verify ownership through course
+    const material = await prisma.material.findUnique({
+      where: { id: materialId },
+      include: {
+        course: true
+      }
+    });
+
+    if (!material) {
+      return res.status(404).json({ error: 'Material not found.' });
+    }
+
+    if (material.course.userId !== userId) {
+      return res.status(403).json({ error: 'Access denied.' });
+    }
+
+    // Delete material (cascading deletes will handle aiData and flashcards)
+    await prisma.material.delete({
+      where: { id: materialId }
+    });
+
+    res.status(200).json({ message: 'Material deleted successfully.' });
+
+  } catch (error) {
+    console.error('Delete material error:', error);
+    res.status(500).json({ error: 'Failed to delete material.' });
   }
 });
 
