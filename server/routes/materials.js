@@ -348,9 +348,22 @@ router.delete('/materials/:id', authenticateToken, async (req, res) => {
       return res.status(403).json({ error: 'Access denied.' });
     }
 
-    // Delete material (cascading deletes will handle aiData and flashcards)
-    await prisma.material.delete({
-      where: { id: materialId }
+    // Use transaction to delete in correct order to avoid foreign key constraint errors
+    await prisma.$transaction(async (tx) => {
+      // Step 1: Delete related Flashcard records first
+      await tx.flashcard.deleteMany({
+        where: { materialId }
+      });
+
+      // Step 2: Delete related AiData record
+      await tx.aiData.deleteMany({
+        where: { materialId }
+      });
+
+      // Step 3: Finally, delete the Material record itself
+      await tx.material.delete({
+        where: { id: materialId }
+      });
     });
 
     res.status(200).json({ message: 'Material deleted successfully.' });

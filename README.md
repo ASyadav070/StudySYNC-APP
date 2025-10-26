@@ -50,6 +50,7 @@ StudySync2/
 │   ├── src/
 │   │   ├── components/        # Reusable React components
 │   │   │   └── CreateCourseModal.jsx
+|   |   |   |__
 │   │   ├── pages/             # Page components
 │   │   │   ├── Login.jsx
 │   │   │   ├── Register.jsx
