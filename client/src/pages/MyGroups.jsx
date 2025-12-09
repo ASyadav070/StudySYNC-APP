@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import api from '../services/api';
 import { 
   Users, Plus, MessageSquare, ArrowLeft, Loader2, 
   AlertCircle, X, Search 
@@ -23,7 +23,7 @@ function MyGroups() {
     try {
       setLoading(true);
       setError('');
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/groups/my-groups`);
+      const response = await api.get('/api/groups/my-groups');
       setGroups(Array.isArray(response.data) ? response.data : []);
     } catch (err) {
       setError('Failed to load your groups. Please try again.');
@@ -36,7 +36,7 @@ function MyGroups() {
   const handleCreateGroup = async (name, description) => {
     try {
       setError('');
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/groups`, {
+      const response = await api.post('/api/groups', {
         name,
         description
       });

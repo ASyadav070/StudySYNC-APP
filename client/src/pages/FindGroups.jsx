@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import api from '../services/api';
 import { 
   Users, ArrowLeft, Loader2, AlertCircle, 
   RefreshCw, UserPlus, BookOpen, X 
@@ -23,7 +23,7 @@ function FindGroups() {
     try {
       setLoading(true);
       setError('');
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/groups/recommendations`);
+      const response = await api.get('/api/groups/recommendations');
       setRecommendations(Array.isArray(response.data) ? response.data : []);
     } catch (err) {
       setError('Failed to load group recommendations. Please try again.');
@@ -37,7 +37,7 @@ function FindGroups() {
     try {
       setJoiningGroup(groupId);
       setError('');
-      await axios.post(`${import.meta.env.VITE_API_URL}/api/groups/${groupId}/join`);
+      await api.post(`/api/groups/${groupId}/join`);
       
       setRecommendations(prev => prev.filter(g => g.id !== groupId));
       
