@@ -119,7 +119,7 @@ router.post('/courses/:id/upload', authenticateToken, upload.single('file'), asy
  */
 async function processFileInBackground(filePath, materialId, userId, prisma, io) {
   try {
-    // Step 1: Read and parse the file (Same as before)
+    // Step 1: Read and parse the file
     let rawText = '';
     const fileExt = path.extname(filePath).toLowerCase();
 
@@ -208,6 +208,11 @@ async function processFileInBackground(filePath, materialId, userId, prisma, io)
   } catch (error) {
     console.error('❌ Background processing error:', error);
 
+    // Determine error message
+    const errorMessage = error.status === 429 
+      ? 'Daily AI limit reached. Please try again tomorrow.' 
+      : 'Failed to process file.';
+
     // Update material status to ERROR
     try {
       await prisma.material.update({
@@ -218,7 +223,8 @@ async function processFileInBackground(filePath, materialId, userId, prisma, io)
       // Notify user of error
       io.to(userId).emit('file_processed', {
         materialId,
-        status: 'ERROR'
+        status: 'ERROR',
+        error: errorMessage
       });
     } catch (dbError) {
       console.error('Error updating material status to ERROR:', dbError);

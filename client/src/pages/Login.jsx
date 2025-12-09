@@ -96,13 +96,25 @@ function Login() {
             </button>
           </form>
 
-          {/* Footer */}
-          <p className="mt-6 text-center text-sm text-gray-600">
-            Don't have an account?{' '}
-            <Link to="/register" className="text-purple-600 font-semibold hover:text-purple-700 hover:underline">
-              Sign up
+          {/* Forgot Password */}
+          <div className="mt-4 text-center">
+            <Link 
+              to="/forgot-password" 
+              className="text-sm text-purple-600 hover:text-purple-700 hover:underline"
+            >
+              Forgot Password?
             </Link>
-          </p>
+          </div>
+
+          {/* Register Link */}
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-600">
+              Don't have an account?{' '}
+              <Link to="/register" className="text-purple-600 hover:text-purple-700 font-medium hover:underline">
+                Sign up
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

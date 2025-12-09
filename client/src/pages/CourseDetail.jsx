@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import api from '../services/api';
 import { useDropzone } from 'react-dropzone';
 import { io } from 'socket.io-client';
 import { 
@@ -51,7 +51,7 @@ function CourseDetail() {
   const fetchCourseDetails = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_URL}/api/courses/${id}`);
+      const response = await api.get(`/api/courses/${id}`);
       setCourse(response.data);
       setError('');
     } catch (err) {
@@ -83,8 +83,8 @@ function CourseDetail() {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await axios.post(
-        `${API_URL}/api/courses/${id}/upload`,
+      const response = await api.post(
+        `/api/courses/${id}/upload`,
         formData,
         {
           headers: {
@@ -100,7 +100,7 @@ function CourseDetail() {
       }));
 
     } catch (err) {
-      showToast('error', error.response?.data?.error || 'Failed to upload file');
+      setUploadError(err.response?.data?.error || 'Failed to upload file');
     } finally {
       setUploading(false);
     }
@@ -134,12 +134,7 @@ function CourseDetail() {
 
     setDeleting(true);
     try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`${API_URL}/api/materials/${materialToDelete.id}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      await api.delete(`/api/materials/${materialToDelete.id}`);
 
       // Update local state by removing the deleted material
       setCourse(prev => ({

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import api from '../services/api';
 import { BookOpen, LogOut, ArrowLeft, Loader2, AlertCircle, CreditCard, ChevronLeft, ChevronRight, RotateCw } from 'lucide-react';
 
 function StudyFlashcards() {
@@ -14,8 +14,6 @@ function StudyFlashcards() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
   useEffect(() => {
     fetchFlashcards();
   }, [id]);
@@ -23,7 +21,7 @@ function StudyFlashcards() {
   const fetchFlashcards = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_URL}/api/materials/${id}/flashcards`);
+      const response = await api.get(`/api/materials/${id}/flashcards`);
       setFlashcards(response.data);
       setError('');
     } catch (err) {

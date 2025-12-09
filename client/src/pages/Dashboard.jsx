@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 import CreateCourseModal from '../components/CreateCourseModal';
 import { LogOut, Plus, BookOpen, Users, MessageSquare, Loader2, Menu, X } from 'lucide-react';
 
@@ -14,8 +14,6 @@ function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
   useEffect(() => {
     fetchCourses();
   }, []);
@@ -23,7 +21,7 @@ function Dashboard() {
   const fetchCourses = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_URL}/api/courses`);
+      const response = await api.get('/api/courses');
       setCourses(response.data);
       setError('');
     } catch (err) {

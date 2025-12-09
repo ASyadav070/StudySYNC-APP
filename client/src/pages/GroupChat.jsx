@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import axios from "axios";
+import api from "../services/api";
 import io from "socket.io-client";
 import { Send, ArrowLeft, Users, Loader2, AlertCircle } from "lucide-react";
 
@@ -22,6 +22,8 @@ function GroupChat() {
 
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
   // Scroll to bottom of messages
   const scrollToBottom = () => {
@@ -52,7 +54,7 @@ function GroupChat() {
 
     // Connect to Socket.IO
     const newSocket = io(
-      import.meta.env.VITE_API_URL || "http://localhost:5000",
+      API_URL,
       {
         auth: {
           token: localStorage.getItem("token"),
@@ -92,21 +94,7 @@ function GroupChat() {
 
   const fetchGroupDetails = async () => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setError("Authentication required. Please log in again.");
-        navigate("/login");
-        return;
-      }
-
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/groups/my-groups`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await api.get('/api/groups/my-groups');
       const foundGroup = response.data.find((g) => g.id === groupId);
 
       if (!foundGroup) {
@@ -135,14 +123,7 @@ function GroupChat() {
         return;
       }
 
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/groups/${groupId}/messages`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await api.get(`/api/groups/${groupId}/messages`);
       setMessages(Array.isArray(response.data) ? response.data : []);
     } catch (err) {
       if (err.response?.status === 401) {
@@ -167,24 +148,9 @@ function GroupChat() {
       setSending(true);
       setError("");
 
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setError("Authentication required. Please log in again.");
-        navigate("/login");
-        return;
-      }
-
-      await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/groups/${groupId}/messages`,
-        {
-          content: newMessage.trim(),
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await api.post(`/api/groups/${groupId}/messages`, {
+        content: newMessage.trim(),
+      });
 
       setNewMessage("");
 

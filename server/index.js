@@ -25,17 +25,22 @@ const authLimiter = rateLimit({
 // Initialize Prisma Client
 const prisma = new PrismaClient();
 
+const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+if (!process.env.CLIENT_URL && process.env.NODE_ENV === 'production') {
+  console.warn('⚠️  WARNING: CLIENT_URL not set. Defaulting to http://localhost:5173');
+}
+
 // Initialize Socket.IO
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: clientUrl,
     methods: ['GET', 'POST']
   }
 });
 
 // Middleware
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: clientUrl,
   credentials: true
 }));
 app.use(express.json());

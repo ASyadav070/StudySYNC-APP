@@ -7,7 +7,7 @@ dotenv.config();
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // THIS IS THE FIX: We are using the exact model name from your working Java code.
-const MODEL_NAME = 'gemini-2.5-flash-preview-05-20';
+const MODEL_NAME = 'gemini-2.5-flash-lite';
 
 // ======================================================================
 // === HELPER FUNCTIONS (Sleep & Retry)
@@ -122,6 +122,12 @@ Return ONLY the valid JSON object:`;
     return aiData;
   } catch (error) {
     console.error('Error generating all AI content:', error);
+    // Propagate 429 errors specifically
+    if (error.status === 429 || (error.cause && error.cause.httpStatus === 429)) {
+      const rateLimitError = new Error('Daily AI limit reached. Please try again tomorrow.');
+      rateLimitError.status = 429;
+      throw rateLimitError;
+    }
     throw new Error('Failed to generate AI content');
   }
 }

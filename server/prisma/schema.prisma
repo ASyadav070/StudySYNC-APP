@@ -16,6 +16,8 @@ model User {
   id        String   @id @default(uuid())
   email     String   @unique
   password  String // This will be a bcrypt hash
+  resetPasswordToken String? @unique // For password reset functionality
+  resetPasswordExpires DateTime? // Token expiration time
   courses   Course[]
   groups    GroupMember[]
   messages  Message[]

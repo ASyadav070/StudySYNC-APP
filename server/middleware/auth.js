@@ -1,14 +1,10 @@
 import jwt from 'jsonwebtoken';
 
-/**
- * Authentication middleware
- * Verifies JWT token and attaches user to request object
- */
 export const authenticateToken = (req, res, next) => {
   // Get token from Authorization header
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1]; 
-  // Bearer TOKEN
+
 
   if (!token) {
     return res.status(401).json({ error: 'Access denied. No token provided.' });
