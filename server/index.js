@@ -25,22 +25,48 @@ const authLimiter = rateLimit({
 // Initialize Prisma Client
 const prisma = new PrismaClient();
 
-const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
-if (!process.env.CLIENT_URL && process.env.NODE_ENV === 'production') {
-  console.warn('⚠️  WARNING: CLIENT_URL not set. Defaulting to http://localhost:5173');
-}
+// Helper to determine allowed origin dynamically
+const getAllowedOrigin = (origin) => {
+  const allowed = process.env.CLIENT_URL || 'http://localhost:5173';
+  // If wildcard or no origin (server-to-server), allow. Otherwise check match.
+  if (allowed === '*' || !origin || origin === allowed) {
+    return origin || allowed;
+  }
+  return false;
+};
 
 // Initialize Socket.IO
 const io = new Server(httpServer, {
   cors: {
-    origin: clientUrl,
-    methods: ['GET', 'POST']
+    origin: (origin, callback) => {
+      const allowed = getAllowedOrigin(origin);
+      if (allowed) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    methods: ['GET', 'POST'],
+    credentials: true
   }
 });
 
 // Middleware
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
+
 app.use(cors({
-  origin: clientUrl,
+  origin: (origin, callback) => {
+    const allowed = getAllowedOrigin(origin);
+    if (allowed) {
+      callback(null, true);
+    } else {
+      console.warn(`Blocked CORS from origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 app.use(express.json());
