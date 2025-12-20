@@ -12,6 +12,7 @@ import StudyFlashcards from './pages/StudyFlashcards'
 import FindGroups from './pages/FindGroups'
 import MyGroups from './pages/MyGroups'
 import GroupChat from './pages/GroupChat'
+import Whiteboard from './pages/Whiteboard'
 import PrivateRoute from './components/PrivateRoute'
 
 function App() {
@@ -77,6 +78,14 @@ function App() {
             element={
               <PrivateRoute>
                 <GroupChat />
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/whiteboard" 
+            element={
+              <PrivateRoute>
+                <Whiteboard />
               </PrivateRoute>
             } 
           />

@@ -3,7 +3,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import io from "socket.io-client";
-import { Send, ArrowLeft, Users, Loader2, AlertCircle } from "lucide-react";
+import { Send, ArrowLeft, Users, Loader2, AlertCircle, MessageSquare, Pencil } from "lucide-react";
+import { Tldraw } from 'tldraw';
+import 'tldraw/tldraw.css';
+import AnalyzeButton from '../components/AnalyzeButton';
 
 function GroupChat() {
   const { id: groupId } = useParams();
@@ -19,9 +22,13 @@ function GroupChat() {
   const [socket, setSocket] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
   const [typingUser, setTypingUser] = useState(null);
+  const [activeTab, setActiveTab] = useState("chat"); // 'chat' or 'whiteboard'
+  const [whiteboardSocket, setWhiteboardSocket] = useState(null);
+  const [connectedUsers, setConnectedUsers] = useState(1);
 
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+  const editorRef = useRef(null);
 
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -84,10 +91,34 @@ function GroupChat() {
 
     setSocket(newSocket);
 
+    // Connect to whiteboard Socket.IO
+    const whiteboardRoomId = `whiteboard-group-${groupId}`;
+    const wbSocket = io(API_URL, {
+      query: { roomId: whiteboardRoomId }
+    });
+
+    wbSocket.on('connect', () => {
+      console.log('Connected to whiteboard room:', whiteboardRoomId);
+    });
+
+    wbSocket.on('user-count', (count) => {
+      console.log('Whiteboard user count:', count);
+      setConnectedUsers(count);
+    });
+    
+    wbSocket.on('connect_error', (error) => {
+      console.error('Whiteboard socket connection error:', error);
+    });
+
+    setWhiteboardSocket(wbSocket);
+
     return () => {
       if (newSocket) {
         newSocket.emit("leave_group_room", groupId);
         newSocket.disconnect();
+      }
+      if (wbSocket) {
+        wbSocket.disconnect();
       }
     };
   }, [groupId, user, authLoading, isAuthenticated]);
@@ -269,9 +300,54 @@ function GroupChat() {
         </div>
       </div>
 
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 bg-white">
-        <div className="max-w-5xl mx-auto">
+      {/* Tab Navigation */}
+      <div className="bg-white border-b border-gray-200 px-4 shrink-0">
+        <div className="max-w-5xl mx-auto flex gap-1">
+          <button
+            onClick={() => setActiveTab("chat")}
+            className={`flex items-center gap-2 px-4 py-3 font-medium transition-colors relative ${
+              activeTab === "chat"
+                ? "text-purple-600"
+                : "text-gray-600 hover:text-gray-800"
+            }`}
+          >
+            <MessageSquare className="w-4 h-4" />
+            <span>Chat</span>
+            {activeTab === "chat" && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-600"></div>
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab("whiteboard")}
+            className={`flex items-center gap-2 px-4 py-3 font-medium transition-colors relative ${
+              activeTab === "whiteboard"
+                ? "text-purple-600"
+                : "text-gray-600 hover:text-gray-800"
+            }`}
+          >
+            <Pencil className="w-4 h-4" />
+            <span>Whiteboard</span>
+            {activeTab === "whiteboard" && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-600"></div>
+            )}
+          </button>
+          {activeTab === "whiteboard" && (
+            <div className="ml-auto flex items-center gap-2 px-3 py-2">
+              <div className="flex items-center gap-1.5 text-xs text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
+                <Users className="w-3 h-3" />
+                <span>{connectedUsers} online</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Content Area */}
+      {activeTab === "chat" ? (
+        <>
+          {/* Messages Area */}
+          <div className="flex-1 overflow-y-auto px-4 py-6 bg-white">
+            <div className="max-w-5xl mx-auto">
           {loading ? (
             <div className="flex flex-col items-center justify-center h-full">
               <Loader2 className="w-8 h-8 text-purple-500 animate-spin mb-4" />
@@ -409,6 +485,75 @@ function GroupChat() {
           </form>
         </div>
       </div>
+        </>
+      ) : (
+        /* Whiteboard Area */
+        <div className="flex-1 bg-white">
+          <Tldraw
+            persistenceKey={`tldraw-group-${groupId}`}
+            onMount={(editor) => {
+              editorRef.current = editor;
+              
+              if (whiteboardSocket) {
+                console.log('Tldraw editor mounted, setting up whiteboard sync');
+                
+                // Listen for remote changes
+                whiteboardSocket.on('drawing-update', (data) => {
+                  console.log('Received drawing update:', data);
+                  try {
+                    if (data.changes && data.changes.length > 0) {
+                      editor.store.mergeRemoteChanges(() => {
+                        data.changes.forEach(change => {
+                          editor.store.put([change]);
+                        });
+                      });
+                    }
+                  } catch (error) {
+                    console.error('Error applying remote changes:', error);
+                  }
+                });
+
+                // Send local changes
+                const handleChange = (event) => {
+                  const { changes } = event;
+                  const changedRecords = [];
+                  
+                  // Collect all added records
+                  if (changes.added) {
+                    Object.values(changes.added).forEach(record => {
+                      changedRecords.push(record);
+                    });
+                  }
+                  
+                  // Collect all updated records
+                  if (changes.updated) {
+                    Object.values(changes.updated).forEach(([from, to]) => {
+                      changedRecords.push(to);
+                    });
+                  }
+                  
+                  if (changedRecords.length > 0) {
+                    console.log('Emitting drawing change:', changedRecords);
+                    whiteboardSocket.emit('drawing-change', {
+                      roomId: `whiteboard-group-${groupId}`,
+                      changes: changedRecords
+                    });
+                  }
+                };
+
+                // Listen to all store changes
+                editor.store.listen(handleChange, {
+                  source: 'user',
+                  scope: 'document'
+                });
+              }
+            }}
+          >
+            {/* Analyze Button inside Tldraw */}
+            <AnalyzeButton groupId={groupId} />
+          </Tldraw>
+        </div>
+      )}
     </div>
   );
 }

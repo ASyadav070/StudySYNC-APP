@@ -1,7 +1,26 @@
 import express from 'express';
+import multer from 'multer';
 import { authenticateToken } from '../middleware/auth.js';
+import { analyzeWhiteboardImage } from '../services/aiProcessor.js';
 
 const router = express.Router();
+
+// Configure multer for image uploads (in-memory storage)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    // Accept only image files
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files (PNG, JPEG, WebP) are allowed'));
+    }
+  }
+});
 
 /**
  * GET /api/groups/recommendations
@@ -444,6 +463,87 @@ router.post('/groups/:id/messages', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Send message error:', error);
     res.status(500).json({ error: 'Failed to send message.' });
+  }
+});
+
+/**
+ * POST /api/groups/:id/analyze-whiteboard
+ * Analyze a whiteboard image using AI vision model
+ */
+router.post('/groups/:id/analyze-whiteboard', authenticateToken, upload.single('image'), async (req, res) => {
+  try {
+    const { id: groupId } = req.params;
+    const userId = req.user.userId;
+    const prisma = req.app.get('prisma');
+
+    console.log('=== Whiteboard Analysis Request ===');
+    console.log('Group ID:', groupId);
+    console.log('User ID:', userId);
+    console.log('File received:', req.file ? 'Yes' : 'No');
+    
+    if (!req.file) {
+      console.error('No file in request');
+      return res.status(400).json({ error: 'No image uploaded.' });
+    }
+
+    console.log('File details:', {
+      mimetype: req.file.mimetype,
+      size: req.file.buffer.length,
+      filename: req.file.originalname
+    });
+
+    // Verify user is a member of this group
+    const membership = await prisma.groupMember.findFirst({
+      where: {
+        groupId: groupId,
+        userId: userId
+      }
+    });
+
+    if (!membership) {
+      console.error('User not a member of group');
+      return res.status(403).json({ error: 'You are not a member of this group.' });
+    }
+
+    console.log('User membership verified, calling AI analysis...');
+    
+    // Analyze the whiteboard image using vision model
+    const analysis = await analyzeWhiteboardImage(req.file.buffer, req.file.mimetype);
+
+    console.log('Analysis successful:', {
+      hasText: !!analysis.text,
+      hasSummary: !!analysis.summary,
+      conceptsCount: analysis.concepts?.length || 0
+    });
+
+    res.status(200).json({
+      success: true,
+      analysis: {
+        text: analysis.text,
+        summary: analysis.summary,
+        concepts: analysis.concepts
+      }
+    });
+
+  } catch (error) {
+    console.error('Whiteboard analysis error:', error);
+    console.error('Error stack:', error.stack);
+    console.error('Error details:', {
+      message: error.message,
+      status: error.status,
+      cause: error.cause
+    });
+    
+    // Handle rate limit errors
+    if (error.status === 429) {
+      return res.status(429).json({ error: error.message });
+    }
+    
+    // Return detailed error message
+    res.status(500).json({ 
+      error: error.message || 'Failed to analyze whiteboard image.',
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 

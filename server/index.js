@@ -77,8 +77,36 @@ app.use(express.urlencoded({ extended: true }));
 app.set('io', io);
 app.set('prisma', prisma);
 
+// Whiteboard rooms tracking
+const whiteboardRooms = new Map();
+
 // Socket.IO connection handling
 io.on('connection', (socket) => {
+  // Whiteboard collaboration
+  const roomId = socket.handshake.query.roomId;
+  
+  if (roomId) {
+    socket.join(roomId);
+    
+    // Track users in whiteboard room
+    if (!whiteboardRooms.has(roomId)) {
+      whiteboardRooms.set(roomId, new Set());
+    }
+    whiteboardRooms.get(roomId).add(socket.id);
+    
+    // Broadcast user count to all users in room
+    io.to(roomId).emit('user-count', whiteboardRooms.get(roomId).size);
+    console.log(`User ${socket.id} joined whiteboard room: ${roomId} (${whiteboardRooms.get(roomId).size} users)`);
+
+    // Handle drawing changes
+    socket.on('drawing-change', (data) => {
+      console.log(`Drawing change from ${socket.id} in room ${data.roomId}, broadcasting to others`);
+      socket.to(data.roomId).emit('drawing-update', {
+        changes: data.changes
+      });
+    });
+  }
+
   // Join user's personal notification room
   socket.on('join', (userId) => {
     socket.join(userId);
@@ -104,6 +132,18 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
+    // Handle whiteboard room cleanup
+    if (roomId && whiteboardRooms.has(roomId)) {
+      whiteboardRooms.get(roomId).delete(socket.id);
+      io.to(roomId).emit('user-count', whiteboardRooms.get(roomId).size);
+      
+      if (whiteboardRooms.get(roomId).size === 0) {
+        whiteboardRooms.delete(roomId);
+        console.log(`Whiteboard room ${roomId} deleted (empty)`);
+      } else {
+        console.log(`User ${socket.id} left whiteboard room: ${roomId} (${whiteboardRooms.get(roomId).size} users remaining)`);
+      }
+    }
     // Connection closed
   });
 });

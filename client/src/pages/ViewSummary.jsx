@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
-import { BookOpen, LogOut, ArrowLeft, Loader2, AlertCircle, FileText } from 'lucide-react';
+import { BookOpen, LogOut, ArrowLeft, Loader2, AlertCircle, FileText, Brain } from 'lucide-react';
+import MindMapRenderer from '../components/MindMapRenderer';
 
 function ViewSummary() {
   const { id } = useParams();
@@ -11,6 +12,9 @@ function ViewSummary() {
   const [summary, setSummary] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [mermaidCode, setMermaidCode] = useState('');
+  const [generatingMindMap, setGeneratingMindMap] = useState(false);
+  const [mindMapError, setMindMapError] = useState('');
 
   useEffect(() => {
     fetchSummary();
@@ -32,6 +36,30 @@ function ViewSummary() {
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const handleGenerateMindMap = async () => {
+    if (!summary || generatingMindMap) return;
+
+    try {
+      setGeneratingMindMap(true);
+      setMindMapError('');
+
+      console.log('Generating mind map for summary...');
+
+      const response = await api.post('/api/ai/generate-mindmap', {
+        summaryText: summary
+      });
+
+      console.log('Mind map generated successfully');
+      setMermaidCode(response.data.mermaidCode);
+
+    } catch (err) {
+      console.error('Mind map generation error:', err);
+      setMindMapError(err.response?.data?.error || 'Failed to generate mind map. Please try again.');
+    } finally {
+      setGeneratingMindMap(false);
+    }
   };
 
   if (loading) {
@@ -162,6 +190,50 @@ function ViewSummary() {
                 )
               ))}
             </div>
+          </div>
+        </div>
+
+        {/* Mind Map Section */}
+        <div className="mt-8 bg-white border border-gray-200 rounded-lg shadow-sm">
+          {/* Header with Generate Button */}
+          <div className="border-b border-gray-200 p-6 flex items-center justify-between">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg flex items-center justify-center shrink-0">
+                <Brain className="w-6 h-6 text-purple-600" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800">Visual Mind Map</h2>
+                <p className="text-gray-600 mt-1">Interactive visualization of key concepts</p>
+              </div>
+            </div>
+            <button
+              onClick={handleGenerateMindMap}
+              disabled={generatingMindMap || !summary}
+              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all font-medium shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {generatingMindMap ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Generating...</span>
+                </>
+              ) : (
+                <>
+                  <Brain className="w-5 h-5" />
+                  <span>Generate Mind Map</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Mind Map Content */}
+          <div className="p-6">
+            {mindMapError && (
+              <div className="mb-4 p-4 bg-red-50 text-red-700 border border-red-200 rounded-lg flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 shrink-0" />
+                <span>{mindMapError}</span>
+              </div>
+            )}
+            <MindMapRenderer chartCode={mermaidCode} />
           </div>
         </div>
       </main>

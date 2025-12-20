@@ -6,8 +6,8 @@ import fs from 'fs';
 // If you are using v4+, you might need: import * as pdfjsLib from 'pdfjs-dist/build/pdf.mjs';
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { authenticateToken } from '../middleware/auth.js';
-// === UPDATED: Import the new single function ===
-import { generateAiContent } from '../services/aiProcessor.js';
+// === UPDATED: Import the AI functions ===
+import { generateAiContent, generateMindMap } from '../services/aiProcessor.js';
 
 const router = express.Router();
 
@@ -380,5 +380,52 @@ router.delete('/materials/:id', authenticateToken, async (req, res) => {
   }
 });
 
-export default router;
+/**
+ * POST /api/ai/generate-mindmap
+ * Generate a Mermaid.js mindmap from a text summary
+ */
+router.post('/ai/generate-mindmap', authenticateToken, async (req, res) => {
+  try {
+    const { summaryText } = req.body;
 
+    console.log('=== Mind Map Generation Request ===');
+    console.log('User ID:', req.user.userId);
+    console.log('Summary length:', summaryText?.length || 0);
+
+    if (!summaryText || typeof summaryText !== 'string' || summaryText.trim().length === 0) {
+      return res.status(400).json({ error: 'Summary text is required.' });
+    }
+
+    if (summaryText.length > 10000) {
+      return res.status(400).json({ error: 'Summary text is too long. Maximum 10,000 characters.' });
+    }
+
+    console.log('Calling AI to generate mind map...');
+    
+    // Generate the mind map using AI
+    const mermaidCode = await generateMindMap(summaryText);
+
+    console.log('Mind map generated successfully, length:', mermaidCode.length);
+
+    res.status(200).json({
+      success: true,
+      mermaidCode: mermaidCode
+    });
+
+  } catch (error) {
+    console.error('Mind map generation error:', error);
+    console.error('Error stack:', error.stack);
+    
+    // Handle rate limit errors
+    if (error.status === 429) {
+      return res.status(429).json({ error: error.message });
+    }
+    
+    res.status(500).json({ 
+      error: error.message || 'Failed to generate mind map.',
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+});
+
+export default router;

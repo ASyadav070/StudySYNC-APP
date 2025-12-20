@@ -47,9 +47,20 @@
               "0%": { transform: "translateX(100%)", opacity: "0" },
               "100%": { transform: "translateX(0)", opacity: "1" },
             },
+            "gradient-xy": {
+              "0%, 100%": {
+                "background-size": "400% 400%",
+                "background-position": "left center",
+              },
+              "50%": {
+                "background-size": "200% 200%",
+                "background-position": "right center",
+              },
+            },
           },
           animation: {
             "slide-in": "slide-in 0.3s ease-out",
+            "gradient-xy": "gradient-xy 3s ease infinite",
           },
         },
       },
