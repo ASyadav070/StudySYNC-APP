@@ -26,29 +26,24 @@ const authLimiter = rateLimit({
 const prisma = new PrismaClient();
 
 // Helper to determine allowed origin dynamically
-const getAllowedOrigin = (origin) => {
-  const allowed = process.env.CLIENT_URL || 'http://localhost:5173';
-  // If wildcard or no origin (server-to-server), allow. Otherwise check match.
-  if (allowed === '*' || !origin || origin === allowed) {
-    return origin || allowed;
-  }
-  return false;
+const getAllowedOrigins = () => {
+  const origins = [
+    'http://localhost:5173',
+    process.env.CLIENT_URL
+  ].filter(Boolean);
+  return origins;
 };
 
 // Initialize Socket.IO
 const io = new Server(httpServer, {
   cors: {
-    origin: (origin, callback) => {
-      const allowed = getAllowedOrigin(origin);
-      if (allowed) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
+    origin: getAllowedOrigins(),
     methods: ['GET', 'POST'],
     credentials: true
-  }
+  },
+  transports: ['websocket', 'polling'],
+  pingTimeout: 60000,
+  pingInterval: 25000
 });
 
 // Middleware
@@ -58,16 +53,10 @@ app.use((req, res, next) => {
 });
 
 app.use(cors({
-  origin: (origin, callback) => {
-    const allowed = getAllowedOrigin(origin);
-    if (allowed) {
-      callback(null, true);
-    } else {
-      console.warn(`Blocked CORS from origin: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true
+  origin: getAllowedOrigins(),
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 app.use(helmet());

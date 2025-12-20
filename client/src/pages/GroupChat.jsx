@@ -25,6 +25,7 @@ function GroupChat() {
   const [activeTab, setActiveTab] = useState("chat"); // 'chat' or 'whiteboard'
   const [whiteboardSocket, setWhiteboardSocket] = useState(null);
   const [connectedUsers, setConnectedUsers] = useState(1);
+  const [isConnected, setIsConnected] = useState(false);
 
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -93,12 +94,18 @@ function GroupChat() {
 
     // Connect to whiteboard Socket.IO
     const whiteboardRoomId = `whiteboard-group-${groupId}`;
-    const wbSocket = io(API_URL, {
-      query: { roomId: whiteboardRoomId }
+    const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    const wbSocket = io(backendUrl, {
+      query: { roomId: whiteboardRoomId },
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000
     });
 
     wbSocket.on('connect', () => {
       console.log('Connected to whiteboard room:', whiteboardRoomId);
+      setIsConnected(true);
     });
 
     wbSocket.on('user-count', (count) => {
@@ -108,6 +115,17 @@ function GroupChat() {
     
     wbSocket.on('connect_error', (error) => {
       console.error('Whiteboard socket connection error:', error);
+      setIsConnected(false);
+    });
+    
+    wbSocket.on('disconnect', () => {
+      console.log('Disconnected from whiteboard room');
+      setIsConnected(false);
+    });
+    
+    wbSocket.on('reconnect', () => {
+      console.log('Reconnected to whiteboard room');
+      setIsConnected(true);
     });
 
     setWhiteboardSocket(wbSocket);
@@ -333,9 +351,16 @@ function GroupChat() {
           </button>
           {activeTab === "whiteboard" && (
             <div className="ml-auto flex items-center gap-2 px-3 py-2">
-              <div className="flex items-center gap-1.5 text-xs text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
+              <div className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-full ${
+                isConnected 
+                  ? 'text-emerald-600 bg-emerald-50' 
+                  : 'text-orange-600 bg-orange-50'
+              }`}>
+                <div className={`w-2 h-2 rounded-full ${
+                  isConnected ? 'bg-emerald-500' : 'bg-orange-500'
+                }`}></div>
                 <Users className="w-3 h-3" />
-                <span>{connectedUsers} online</span>
+                <span>{isConnected ? `${connectedUsers} online` : 'Connecting...'}</span>
               </div>
             </div>
           )}
@@ -490,11 +515,11 @@ function GroupChat() {
         /* Whiteboard Area */
         <div className="flex-1 bg-white">
           <Tldraw
-            persistenceKey={`tldraw-group-${groupId}`}
+            persistenceKey={`tldraw-group-${groupId}-${import.meta.env.MODE}`}
             onMount={(editor) => {
               editorRef.current = editor;
               
-              if (whiteboardSocket) {
+              if (whiteboardSocket && whiteboardSocket.connected) {
                 console.log('Tldraw editor mounted, setting up whiteboard sync');
                 
                 // Listen for remote changes
