@@ -150,6 +150,79 @@ function GroupChat() {
     };
   }, [groupId, user, authLoading, isAuthenticated]);
 
+  // Setup whiteboard synchronization when both editor and socket are ready
+  useEffect(() => {
+    if (!editorRef.current || !whiteboardSocket || !isWhiteboardConnected) {
+      return;
+    }
+
+    const editor = editorRef.current;
+    console.log('Setting up whiteboard sync with editor and socket');
+
+    // Handle incoming drawing updates from other users
+    const handleDrawingUpdate = (data) => {
+      console.log('Received drawing update:', data);
+      try {
+        if (data.changes && Array.isArray(data.changes) && data.changes.length > 0) {
+          editor.store.mergeRemoteChanges(() => {
+            data.changes.forEach(change => {
+              if (change && typeof change === 'object') {
+                editor.store.put([change]);
+              }
+            });
+          });
+        }
+      } catch (error) {
+        console.error('Error applying remote changes:', error);
+      }
+    };
+
+    // Handle local drawing changes to broadcast to other users
+    const handleChange = (event) => {
+      try {
+        const { changes } = event;
+        const changedRecords = [];
+        
+        // Collect all added records
+        if (changes.added) {
+          Object.values(changes.added).forEach(record => {
+            changedRecords.push(record);
+          });
+        }
+        
+        // Collect all updated records
+        if (changes.updated) {
+          Object.values(changes.updated).forEach(([from, to]) => {
+            changedRecords.push(to);
+          });
+        }
+        
+        if (changedRecords.length > 0 && whiteboardSocket && whiteboardSocket.connected) {
+          whiteboardSocket.emit('drawing-change', {
+            roomId: `whiteboard-group-${groupId}`,
+            changes: changedRecords
+          });
+        }
+      } catch (error) {
+        console.error('Error handling drawing change:', error);
+      }
+    };
+
+    // Setup listeners
+    whiteboardSocket.on('drawing-update', handleDrawingUpdate);
+    const unsubscribe = editor.store.listen(handleChange, {
+      source: 'user',
+      scope: 'document'
+    });
+
+    // Cleanup function
+    return () => {
+      console.log('Cleaning up whiteboard sync listeners');
+      whiteboardSocket.off('drawing-update', handleDrawingUpdate);
+      unsubscribe();
+    };
+  }, [whiteboardSocket, isWhiteboardConnected, groupId]);
+
   const fetchGroupDetails = async () => {
     try {
       const response = await api.get('/api/groups/my-groups');
@@ -542,70 +615,11 @@ function GroupChat() {
           <div className="flex-1 bg-white">
             <Tldraw
               persistenceKey={`tldraw-group-${groupId}`}
-            onMount={(editor) => {
-              editorRef.current = editor;
-              
-              if (whiteboardSocket && whiteboardSocket.connected) {
-                console.log('Tldraw editor mounted, setting up whiteboard sync');
-                
-                // Listen for remote changes
-                whiteboardSocket.on('drawing-update', (data) => {
-                  console.log('Received drawing update:', data);
-                  try {
-                    if (data.changes && Array.isArray(data.changes) && data.changes.length > 0) {
-                      editor.store.mergeRemoteChanges(() => {
-                        data.changes.forEach(change => {
-                          if (change && typeof change === 'object') {
-                            editor.store.put([change]);
-                          }
-                        });
-                      });
-                    }
-                  } catch (error) {
-                    console.error('Error applying remote changes:', error);
-                  }
-                });
-
-                // Send local changes
-                const handleChange = (event) => {
-                  const { changes } = event;
-                  const changedRecords = [];
-                  
-                  // Collect all added records
-                  if (changes.added) {
-                    Object.values(changes.added).forEach(record => {
-                      changedRecords.push(record);
-                    });
-                  }
-                  
-                  // Collect all updated records
-                  if (changes.updated) {
-                    Object.values(changes.updated).forEach(([from, to]) => {
-                      changedRecords.push(to);
-                    });
-                  }
-                  
-                  if (changedRecords.length > 0 && whiteboardSocket && whiteboardSocket.connected) {
-                    console.log('Emitting drawing change:', changedRecords);
-                    try {
-                      whiteboardSocket.emit('drawing-change', {
-                        roomId: `whiteboard-group-${groupId}`,
-                        changes: changedRecords
-                      });
-                    } catch (error) {
-                      console.error('Error emitting drawing changes:', error);
-                    }
-                  }
-                };
-
-                // Listen to all store changes
-                editor.store.listen(handleChange, {
-                  source: 'user',
-                  scope: 'document'
-                });
-              }
-            }}
-          >
+              onMount={(editor) => {
+                editorRef.current = editor;
+                console.log('Tldraw editor mounted');
+              }}
+            >
             {/* Analyze Button inside Tldraw */}
             <AnalyzeButton groupId={groupId} />
           </Tldraw>
