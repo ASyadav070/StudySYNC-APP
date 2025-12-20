@@ -58,6 +58,38 @@ function Dashboard() {
     }
   };
 
+  // Generate unique image and styling for each course
+  const getCourseImage = (courseName, courseId) => {
+    const imagePool = [
+      'photo-1516321318423-f06f85e504b3', // Code/Programming
+      'photo-1517694712202-14dd9538aa97', // Tech/Computer
+      'photo-1526374965328-7f61d4dc18c5', // Data/Mathematics
+      'photo-1509228468518-180dd4864904', // Science/Lab
+      'photo-1550751827-4bd374c3f58b', // Technology
+      'photo-1451187580459-43490279c0fa', // Network/Tech
+      'photo-1488590528505-98d2b5aba04b', // Computer Hardware
+      'photo-1518770660439-4636190af475', // Tech Workspace
+      'photo-1461749280684-dccba630e2f6', // Coding
+      'photo-1629654297299-c8506221ca97' // Study/Work
+    ];
+    
+    // Use course ID or name to deterministically select an image
+    const hash = (courseId || courseName || '').split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const index = hash % imagePool.length;
+    
+    return `https://images.unsplash.com/${imagePool[index]}?w=800&auto=format&fit=crop`;
+  };
+
+  // Generate tag based on course name
+  const getCourseTag = (courseName) => {
+    if (!courseName) return 'NEW';
+    const words = courseName.split(' ');
+    if (words.length >= 2) {
+      return words.slice(0, 2).map(w => w.charAt(0).toUpperCase()).join('');
+    }
+    return courseName.substring(0, 3).toUpperCase();
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-purple-50/30 to-blue-50/30">
       {/* Glassmorphic Header */}
@@ -172,7 +204,7 @@ function Dashboard() {
                 {/* Card Image with Overlays */}
                 <div className="relative h-48 overflow-hidden">
                   <img
-                    src={course.image || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop'}
+                    src={getCourseImage(course.name, course.id)}
                     alt={course.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
@@ -184,7 +216,7 @@ function Dashboard() {
                   
                   {/* Tag Overlay (Top-right) */}
                   <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm px-3 py-1 rounded-full">
-                    <span className="text-xs font-semibold text-purple-600">{course.tag || 'NEW'}</span>
+                    <span className="text-xs font-semibold text-purple-600">{getCourseTag(course.name)}</span>
                   </div>
                 </div>
 
