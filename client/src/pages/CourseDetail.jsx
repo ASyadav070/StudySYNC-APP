@@ -4,9 +4,10 @@ import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { useDropzone } from 'react-dropzone';
 import { io } from 'socket.io-client';
+import { motion } from 'framer-motion';
 import { 
   BookOpen, LogOut, Upload, FileText, Loader2, 
-  ArrowLeft, Eye, CreditCard, Trash2, X, AlertCircle 
+  ArrowLeft, Sparkles, BookOpenCheck, Trash2, X, AlertCircle, CheckCircle 
 } from 'lucide-react';
 
 function CourseDetail() {
@@ -169,19 +170,23 @@ function CourseDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <header className="bg-linear-to-r from-purple-500 to-blue-600 shadow-lg">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-purple-50/30 to-blue-50/30">
+        <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200/50 shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
-              <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/dashboard')}>
-                <h1 className="text-2xl font-bold text-white">StudySync</h1>
+              <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/dashboard')}>
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
+                  <BookOpen className="w-6 h-6 text-white" />
+                </div>
+                <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">StudySync</h1>
               </div>
               <div className="flex items-center gap-4">
-                <span className="text-sm text-white hidden sm:inline">{user?.email}</span>
+                <span className="hidden sm:inline text-sm text-gray-600">{user?.email}</span>
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-white/10 hover:bg-white/20 rounded-md transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all"
                 >
+                  <LogOut className="w-4 h-4" />
                   <span className="hidden sm:inline">Logout</span>
                 </button>
               </div>
@@ -200,19 +205,23 @@ function CourseDetail() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <header className="bg-linear-to-r from-purple-500 to-blue-600 shadow-lg">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-purple-50/30 to-blue-50/30">
+        <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200/50 shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
-              <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/dashboard')}>
-                <h1 className="text-2xl font-bold text-white">StudySync</h1>
+              <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/dashboard')}>
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
+                  <BookOpen className="w-6 h-6 text-white" />
+                </div>
+                <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">StudySync</h1>
               </div>
               <div className="flex items-center gap-4">
-                <span className="text-sm text-white hidden sm:inline">{user?.email}</span>
+                <span className="hidden sm:inline text-sm text-gray-600">{user?.email}</span>
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-white/10 hover:bg-white/20 rounded-md transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all"
                 >
+                  <LogOut className="w-4 h-4" />
                   <span className="hidden sm:inline">Logout</span>
                 </button>
               </div>
@@ -220,15 +229,15 @@ function CourseDetail() {
           </div>
         </header>
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="mb-6 p-4 rounded-md bg-red-50 text-red-700 border border-red-200">
+          <div className="mb-6 p-4 rounded-lg bg-red-50 text-red-700 border border-red-200">
             <p className="text-sm">{error}</p>
           </div>
           <button
             onClick={() => navigate('/dashboard')}
-            className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-purple-600 transition-colors"
+            className="flex items-center gap-2 text-sm font-medium text-purple-600 hover:text-purple-700 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Dashboard
+            Back to Courses
           </button>
         </main>
       </div>
@@ -236,20 +245,24 @@ function CourseDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-linear-to-r from-purple-500 to-blue-600 shadow-lg">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-purple-50/30 to-blue-50/30">
+      {/* Glassmorphic Header */}
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200/50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/dashboard')}>
-              <h1 className="text-2xl font-bold text-white">StudySync</h1>
+            <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/dashboard')}>
+              <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
+                <BookOpen className="w-6 h-6 text-white" />
+              </div>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">StudySync</h1>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-white hidden sm:inline">{user?.email}</span>
+              <span className="hidden sm:inline text-sm text-gray-600">{user?.email}</span>
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-white/10 hover:bg-white/20 rounded-md transition-colors"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all"
               >
+                <LogOut className="w-4 h-4" />
                 <span className="hidden sm:inline">Logout</span>
               </button>
             </div>
@@ -260,54 +273,85 @@ function CourseDetail() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Back Button */}
-        <button
+        <motion.button
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
           onClick={() => navigate('/dashboard')}
-          className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-purple-600 transition-colors mb-6"
+          className="flex items-center gap-2 text-sm font-medium text-purple-600 hover:text-purple-700 transition-colors mb-6"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Courses
-        </button>
+        </motion.button>
 
-        {/* Course Header */}
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-800">{course.name}</h2>
-          <p className="text-gray-600 mt-1">Study materials for this course</p>
-        </div>
+        {/* Course Header Banner */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative overflow-hidden bg-gradient-to-r from-purple-600 via-purple-500 to-blue-600 rounded-3xl shadow-2xl p-8 mb-8"
+        >
+          {/* Decorative Background Pattern */}
+          <div className="absolute inset-0 opacity-20">
+            <div className="absolute -right-10 -top-10 w-40 h-40 bg-white rounded-full blur-3xl"></div>
+            <div className="absolute right-20 bottom-10 w-32 h-32 bg-white rounded-full blur-2xl"></div>
+          </div>
+          
+          <div className="relative z-10">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">{course.name}</h2>
+            <p className="text-purple-100 text-lg">
+              {course.description || 'Manage and organize all your study materials'}
+            </p>
+          </div>
+        </motion.div>
 
         {/* File Upload Dropzone */}
-        <div
-          {...getRootProps()}
-          className={`border-2 border-dashed rounded-lg p-8 text-center transition-all cursor-pointer mb-6 ${
-            isDragActive 
-              ? 'border-purple-500 bg-purple-50' 
-              : 'border-gray-300 hover:border-purple-400 hover:bg-gray-50'
-          } ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
         >
-          <input {...getInputProps()} />
-          {uploading ? (
-            <div className="flex flex-col items-center gap-3">
-              <Loader2 className="w-12 h-12 text-purple-500 animate-spin" />
-              <p className="text-sm text-gray-600">Uploading...</p>
-            </div>
-          ) : isDragActive ? (
-            <div className="flex flex-col items-center gap-3">
-              <Upload className="w-12 h-12 text-purple-500" />
-              <p className="text-sm font-medium text-gray-800">Drop the file here...</p>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center gap-3">
-              <Upload className="w-12 h-12 text-gray-400" />
-              <div>
-                <p className="text-sm font-medium text-gray-800">
-                  Drag & drop a file here, or click to select
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  Supported formats: PDF, TXT (Max 10MB)
-                </p>
+          <div
+            {...getRootProps()}
+            className={`bg-white border-2 border-dashed rounded-2xl p-12 text-center transition-all cursor-pointer mb-8 shadow-sm ${
+              isDragActive 
+                ? 'border-purple-500 bg-purple-50 scale-105' 
+                : 'border-gray-300 hover:border-purple-400 hover:bg-purple-50/30'
+            } ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            <input {...getInputProps()} />
+            {uploading ? (
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center">
+                  <Loader2 className="w-8 h-8 text-purple-600 animate-spin" />
+                </div>
+                <p className="text-base font-medium text-gray-700">Uploading...</p>
               </div>
-            </div>
-          )}
-        </div>
+            ) : isDragActive ? (
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center">
+                  <Upload className="w-8 h-8 text-purple-600" />
+                </div>
+                <p className="text-base font-medium text-gray-800">Drop the file here...</p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center">
+                  <Upload className="w-8 h-8 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-lg font-semibold text-gray-800 mb-1">
+                    Upload Your Study Materials
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Drag & drop a file here, or click to select
+                  </p>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Supported formats: PDF, TXT, Max (10MB)
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </motion.div>
 
         {/* Upload Error */}
         {uploadError && (
@@ -319,7 +363,12 @@ function CourseDetail() {
 
         {/* Materials List or Empty State */}
         {course.materials.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 bg-white rounded-lg border border-gray-200 shadow-sm">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-gray-200 shadow-sm"
+          >
             <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mb-6">
               <FileText className="w-10 h-10 text-purple-600" />
             </div>
@@ -327,58 +376,76 @@ function CourseDetail() {
             <p className="text-gray-600 text-center max-w-md">
               Upload your first study material to get AI-generated summaries and flashcards
             </p>
-          </div>
+          </motion.div>
         ) : (
           <div className="space-y-4">
-            {course.materials.map((material) => (
-              <div
+            {course.materials.map((material, index) => (
+              <motion.div
                 key={material.id}
-                className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-xl transition-all"
               >
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                   {/* Material Info */}
                   <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center shrink-0">
-                      <FileText className="w-6 h-6 text-purple-600" />
+                    <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-600 rounded-2xl flex items-center justify-center shrink-0 shadow-lg">
+                      <FileText className="w-8 h-8 text-white" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="text-lg font-semibold text-gray-800 truncate">
+                      <h3 className="text-lg font-semibold text-gray-900 truncate mb-1">
                         {material.filename}
                       </h3>
                       <p className="text-sm text-gray-500">
-                        Uploaded {new Date(material.createdAt).toLocaleDateString()}
+                        Uploaded {new Date(material.createdAt).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' })}
                       </p>
                     </div>
                   </div>
 
-                  {/* Actions */}
+                  {/* Status & Actions */}
                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                    {getStatusBadge(material.status)}
+                    {material.status === 'COMPLETED' ? (
+                      <div className="flex items-center gap-2 px-3 py-1.5 bg-green-100 text-green-700 rounded-full">
+                        <CheckCircle className="w-4 h-4" />
+                        <span className="text-sm font-medium">Completed</span>
+                      </div>
+                    ) : (
+                      getStatusBadge(material.status)
+                    )}
                     {material.status === 'COMPLETED' && (
                       <div className="flex flex-wrap gap-2">
-                        <button
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
                           onClick={() => handleViewSummary(material.id)}
-                          className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-linear-to-r from-purple-500 to-blue-600 text-white rounded-md hover:from-purple-600 hover:to-blue-700 transition-all shadow-sm"
+                          className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold bg-purple-100 text-purple-700 rounded-full hover:bg-purple-200 transition-all"
                         >
+                          <Sparkles className="w-4 h-4" />
                           View Summary
-                        </button>
-                        <button
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
                           onClick={() => handleStudyFlashcards(material.id)}
-                          className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-linear-to-r from-purple-500 to-blue-600 text-white rounded-md hover:from-purple-600 hover:to-blue-700 transition-all shadow-sm"
+                          className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-full hover:from-purple-700 hover:to-blue-700 transition-all shadow-md"
                         >
+                          <BookOpenCheck className="w-4 h-4" />
                           Study Flashcards
-                        </button>
-                        <button
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
                           onClick={() => handleDeleteClick(material)}
-                          className="flex items-center gap-2 px-3 py-2 text-sm font-medium bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-colors"
+                          className="flex items-center justify-center w-10 h-10 text-red-600 hover:bg-red-50 rounded-full transition-colors"
                         >
                           <Trash2 className="w-4 h-4" />
-                        </button>
+                        </motion.button>
                       </div>
                     )}
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         )}
