@@ -368,13 +368,13 @@ function GroupChat() {
                 </div>
             )}
             
-            {/* TLDRAW CONTAINER - Conditionally rendered to avoid resource consumption when not ready */}
-            {whiteboardReady && (
+            {/* TLDRAW CONTAINER - Mount when socket connects, loading overlay hides until editor ready */}
+            {isWhiteboardConnected && (
                 <div className="w-full h-full">
                     <Tldraw
-                        persistenceKey={`tldraw-${groupId}`} // Use persistence key to handle local caching safely
+                        persistenceKey={`tldraw-${groupId}`}
                         onMount={handleMount}
-                        inferDarkMode={false} // Prevents flashing
+                        inferDarkMode={false}
                     >
                         <AnalyzeButton groupId={groupId} />
                     </Tldraw>
