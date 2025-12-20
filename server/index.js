@@ -29,9 +29,16 @@ const prisma = new PrismaClient();
 const getAllowedOrigins = () => {
   const origins = [
     'http://localhost:5173',
-    process.env.CLIENT_URL
-  ].filter(Boolean);
-  return origins;
+    'http://localhost:5174',
+    'http://localhost:3000',
+  ];
+  
+  // Add production CLIENT_URL if defined
+  if (process.env.CLIENT_URL && process.env.CLIENT_URL !== '*') {
+    origins.push(process.env.CLIENT_URL);
+  }
+  
+  return origins.filter(Boolean);
 };
 
 // Initialize Socket.IO
@@ -43,7 +50,8 @@ const io = new Server(httpServer, {
   },
   transports: ['websocket', 'polling'],
   pingTimeout: 60000,
-  pingInterval: 25000
+  pingInterval: 25000,
+  allowEIO3: true
 });
 
 // Middleware
