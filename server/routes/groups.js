@@ -126,16 +126,27 @@ router.get('/groups/recommendations', authenticateToken, async (req, res) => {
 
     const similarUserIds = Array.from(userOverlap.keys());
 
-    // Step 3: Find groups that similar users are in
+    // Step 3: Find groups that similar users are in (excluding groups user is already a member of)
     const groups = await prisma.group.findMany({
       where: {
-        members: {
-          some: {
-            userId: {
-              in: similarUserIds
+        AND: [
+          {
+            members: {
+              some: {
+                userId: {
+                  in: similarUserIds
+                }
+              }
+            }
+          },
+          {
+            members: {
+              none: {
+                userId: userId
+              }
             }
           }
-        }
+        ]
       },
       include: {
         members: {
@@ -151,15 +162,9 @@ router.get('/groups/recommendations', authenticateToken, async (req, res) => {
       }
     });
 
-    // Step 4: Calculate matching keywords for each group and filter out groups user is already in
+    // Step 4: Calculate matching keywords for each group
     const recommendations = groups
       .map(group => {
-        // Check if user is already a member
-        const isAlreadyMember = group.members.some(member => member.userId === userId);
-        if (isAlreadyMember) {
-          return null; // Filter out groups user is already in
-        }
-
         // Get all matching keywords from members in this group
         const groupMatchingKeywords = new Set();
         group.members.forEach(member => {
@@ -178,7 +183,7 @@ router.get('/groups/recommendations', authenticateToken, async (req, res) => {
           relevanceScore: groupMatchingKeywords.size
         };
       })
-      .filter(g => g !== null) // Remove groups user is already in
+      .filter(g => g.relevanceScore > 0) // Only show groups with at least one matching keyword
       .sort((a, b) => b.relevanceScore - a.relevanceScore); // Sort by most relevant
 
     res.status(200).json(recommendations);
