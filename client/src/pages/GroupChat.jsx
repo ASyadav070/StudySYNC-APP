@@ -3,10 +3,11 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import io from "socket.io-client";
-import { Send, ArrowLeft, Users, Loader2, AlertCircle, MessageSquare, Pencil } from "lucide-react";
-import { Tldraw } from 'tldraw';
-import 'tldraw/tldraw.css';
-import AnalyzeButton from '../components/AnalyzeButton';
+import { Send, ArrowLeft, Users, Loader2, AlertCircle } from "lucide-react";
+// WHITEBOARD IMPORTS - COMMENTED OUT
+// import { Tldraw } from 'tldraw';
+// import 'tldraw/tldraw.css';
+// import AnalyzeButton from '../components/AnalyzeButton';
 
 function GroupChat() {
   const { id: groupId } = useParams();
@@ -22,28 +23,29 @@ function GroupChat() {
   const [socket, setSocket] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
   const [typingUser, setTypingUser] = useState(null);
-  const [activeTab, setActiveTab] = useState("chat");
-  const [whiteboardSocket, setWhiteboardSocket] = useState(null);
-  const [connectedUsers, setConnectedUsers] = useState(1);
-  const [isWhiteboardConnected, setIsWhiteboardConnected] = useState(false);
-  // Default to false; set to true only when both socket connects AND editor mounts with valid store
-  const [whiteboardReady, setWhiteboardReady] = useState(false);
+  // WHITEBOARD STATE - COMMENTED OUT
+  // const [activeTab, setActiveTab] = useState("chat");
+  // const [whiteboardSocket, setWhiteboardSocket] = useState(null);
+  // const [connectedUsers, setConnectedUsers] = useState(1);
+  // const [isWhiteboardConnected, setIsWhiteboardConnected] = useState(false);
+  // const [whiteboardReady, setWhiteboardReady] = useState(false);
 
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
-  const editorRef = useRef(null);
-  const storeUnsubscribeRef = useRef(null);
-  const drawingTimeoutRef = useRef(null);
-  const groupIdRef = useRef(groupId); // Store current groupId to avoid stale closure
+  // WHITEBOARD REFS - COMMENTED OUT
+  // const editorRef = useRef(null);
+  // const storeUnsubscribeRef = useRef(null);
+  // const drawingTimeoutRef = useRef(null);
+  // const groupIdRef = useRef(groupId);
 
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-  // Update groupIdRef whenever groupId changes to prevent stale closure
-  useEffect(() => {
-    groupIdRef.current = groupId;
-  }, [groupId]);
+  // WHITEBOARD GROUPID REF EFFECT - COMMENTED OUT
+  // useEffect(() => {
+  //   groupIdRef.current = groupId;
+  // }, [groupId]);
 
-  // --- STANDARD CHAT LOGIC (Unchanged) ---
+  // --- STANDARD CHAT LOGIC ---
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -91,118 +93,89 @@ function GroupChat() {
     };
   }, [groupId, user, authLoading, isAuthenticated]);
 
-  // --- WHITEBOARD SOCKET LOGIC ---
-  useEffect(() => {
-    if (activeTab !== 'whiteboard' || !isAuthenticated || !user) return;
+  // --- WHITEBOARD SOCKET LOGIC - COMMENTED OUT ---
+  // useEffect(() => {
+  //   if (activeTab !== 'whiteboard' || !isAuthenticated || !user) return;
+  //   const whiteboardRoomId = `whiteboard-group-${groupId}`;
+  //   console.log('🎨 Initializing whiteboard socket');
+  //   const wbSocket = io(API_URL, {
+  //     query: { roomId: whiteboardRoomId },
+  //     transports: ['websocket', 'polling'],
+  //     reconnectionAttempts: 5,
+  //   });
+  //   wbSocket.on('connect', () => {
+  //     console.log('✅ Whiteboard socket connected');
+  //     setIsWhiteboardConnected(true);
+  //   });
+  //   wbSocket.on('disconnect', () => setIsWhiteboardConnected(false));
+  //   wbSocket.on('user-count', (count) => setConnectedUsers(count));
+  //   setWhiteboardSocket(wbSocket);
+  //   return () => {
+  //     wbSocket.disconnect();
+  //     setWhiteboardSocket(null);
+  //     setIsWhiteboardConnected(false);
+  //     setWhiteboardReady(false);
+  //   };
+  // }, [activeTab, groupId, API_URL, isAuthenticated, user]);
 
-    const whiteboardRoomId = `whiteboard-group-${groupId}`;
-    console.log('🎨 Initializing whiteboard socket');
+  // --- WHITEBOARD SYNC LOGIC - COMMENTED OUT ---
+  // const handleMount = useCallback((editor) => {
+  //   console.log('📝 Tldraw mounted');
+  //   editorRef.current = editor;
+  //   if (whiteboardSocket && whiteboardSocket.connected && editor.store) {
+  //     console.log('✅ Both socket and editor ready - enabling sync');
+  //     setWhiteboardReady(true);
+  //   }
+  // }, [whiteboardSocket]);
 
-    const wbSocket = io(API_URL, {
-      query: { roomId: whiteboardRoomId },
-      transports: ['websocket', 'polling'],
-      reconnectionAttempts: 5,
-    });
+  // useEffect(() => {
+  //   if (!editorRef.current || !whiteboardSocket || !isWhiteboardConnected || !whiteboardReady) {
+  //     return;
+  //   }
+  //   const editor = editorRef.current;
+  //   const handleDrawingUpdate = (data) => {
+  //     if (!data.changes || !Array.isArray(data.changes)) return;
+  //     try {
+  //       if(editor.store) {
+  //         editor.store.mergeRemoteChanges(() => {
+  //           editor.store.put(data.changes);
+  //         });
+  //       }
+  //     } catch (error) {
+  //       console.warn('Sync warning (harmless if unmounting):', error);
+  //     }
+  //   };
+  //   const emitDrawingChange = (changedRecords) => {
+  //     if (drawingTimeoutRef.current) clearTimeout(drawingTimeoutRef.current);
+  //     drawingTimeoutRef.current = setTimeout(() => {
+  //       if (whiteboardSocket?.connected) {
+  //         whiteboardSocket.emit('drawing-change', {
+  //           roomId: `whiteboard-group-${groupIdRef.current}`,
+  //           changes: changedRecords
+  //         });
+  //       }
+  //     }, 50);
+  //   };
+  //   const handleChange = (event) => {
+  //     if (event.source !== 'user') return; 
+  //     const { changes } = event;
+  //     const changedRecords = [];
+  //     if (changes.added) Object.values(changes.added).forEach(r => changedRecords.push(r));
+  //     if (changes.updated) Object.values(changes.updated).forEach(([_, to]) => changedRecords.push(to));
+  //     if (changedRecords.length > 0) {
+  //       emitDrawingChange(changedRecords);
+  //     }
+  //   };
+  //   whiteboardSocket.on('drawing-update', handleDrawingUpdate);
+  //   const cleanupStore = editor.store.listen(handleChange, { source: 'user', scope: 'document' });
+  //   return () => {
+  //     whiteboardSocket.off('drawing-update', handleDrawingUpdate);
+  //     cleanupStore();
+  //     if (drawingTimeoutRef.current) clearTimeout(drawingTimeoutRef.current);
+  //   };
+  // }, [whiteboardSocket, isWhiteboardConnected, whiteboardReady]);
 
-    wbSocket.on('connect', () => {
-      console.log('✅ Whiteboard socket connected');
-      setIsWhiteboardConnected(true);
-    });
-
-    wbSocket.on('disconnect', () => setIsWhiteboardConnected(false));
-    wbSocket.on('user-count', (count) => setConnectedUsers(count));
-    
-    setWhiteboardSocket(wbSocket);
-
-    return () => {
-      wbSocket.disconnect();
-      setWhiteboardSocket(null);
-      setIsWhiteboardConnected(false);
-      setWhiteboardReady(false);
-    };
-  }, [activeTab, groupId, API_URL, isAuthenticated, user]);
-
-  // --- WHITEBOARD SYNC LOGIC ---
-  // Memoize handleMount to prevent re-creation
-  const handleMount = useCallback((editor) => {
-    console.log('📝 Tldraw mounted');
-    editorRef.current = editor;
-    
-    // Only set whiteboardReady when BOTH socket is connected AND editor has a valid store
-    if (whiteboardSocket && whiteboardSocket.connected && editor.store) {
-      console.log('✅ Both socket and editor ready - enabling sync');
-      setWhiteboardReady(true);
-    }
-  }, [whiteboardSocket]);
-
-  useEffect(() => {
-    // Strict check: We need Editor, Socket, Connection AND the Ready flag
-    if (!editorRef.current || !whiteboardSocket || !isWhiteboardConnected || !whiteboardReady) {
-      return;
-    }
-
-    const editor = editorRef.current;
-
-    const handleDrawingUpdate = (data) => {
-      if (!data.changes || !Array.isArray(data.changes)) return;
-      
-      try {
-        // CRITICAL FIX: Wrap in a check to ensure editor isn't disposed
-        if(editor.store) {
-          // Batch all changes into a single put call to avoid multiple notifications/re-renders
-          editor.store.mergeRemoteChanges(() => {
-            editor.store.put(data.changes);
-          });
-        }
-      } catch (error) {
-        console.warn('Sync warning (harmless if unmounting):', error);
-      }
-    };
-
-    const emitDrawingChange = (changedRecords) => {
-      if (drawingTimeoutRef.current) clearTimeout(drawingTimeoutRef.current);
-
-      drawingTimeoutRef.current = setTimeout(() => {
-        if (whiteboardSocket?.connected) {
-          whiteboardSocket.emit('drawing-change', {
-            roomId: `whiteboard-group-${groupIdRef.current}`, // Use ref to avoid stale closure
-            changes: changedRecords
-          });
-        }
-      }, 50);
-    };
-
-    const handleChange = (event) => {
-        // Filter out changes that are not from the 'user' (avoid loops)
-        if (event.source !== 'user') return; 
-
-        const { changes } = event;
-        const changedRecords = [];
-
-        // Combine added/updated into a single array
-        if (changes.added) Object.values(changes.added).forEach(r => changedRecords.push(r));
-        if (changes.updated) Object.values(changes.updated).forEach(([_, to]) => changedRecords.push(to));
-        
-        // Handle removals if your backend supports it
-        // if (changes.removed) ... 
-
-        if (changedRecords.length > 0) {
-            emitDrawingChange(changedRecords);
-        }
-    };
-
-    whiteboardSocket.on('drawing-update', handleDrawingUpdate);
-    
-    const cleanupStore = editor.store.listen(handleChange, { source: 'user', scope: 'document' });
-
-    return () => {
-      whiteboardSocket.off('drawing-update', handleDrawingUpdate);
-      cleanupStore();
-      if (drawingTimeoutRef.current) clearTimeout(drawingTimeoutRef.current);
-    };
-  }, [whiteboardSocket, isWhiteboardConnected, whiteboardReady]); // groupId tracked via ref to avoid stale closure
-
-  // --- API CALLS (Unchanged) ---
+  // --- API CALLS ---
   const fetchGroupDetails = async () => {
     try {
       const response = await api.get('/api/groups/my-groups');
@@ -273,8 +246,8 @@ function GroupChat() {
         </div>
       </div>
 
-      {/* TABS */}
-      <div className="bg-white border-b px-4">
+      {/* TABS - COMMENTED OUT (WHITEBOARD DISABLED) */}
+      {/* <div className="bg-white border-b px-4">
         <div className="max-w-5xl mx-auto flex gap-4">
           <button onClick={() => setActiveTab("chat")} className={`py-3 flex gap-2 ${activeTab === "chat" ? "text-purple-600 border-b-2 border-purple-600" : "text-gray-600"}`}>
             <MessageSquare className="w-4 h-4" /> Chat
@@ -283,11 +256,10 @@ function GroupChat() {
             <Pencil className="w-4 h-4" /> Whiteboard
           </button>
         </div>
-      </div>
+      </div> */}
 
-      {/* CONTENT AREA */}
-      {activeTab === "chat" ? (
-        <div className="flex-1 overflow-y-auto px-4 py-6 bg-white flex flex-col">
+      {/* CHAT CONTENT */}
+      <div className="flex-1 overflow-y-auto px-4 py-6 bg-white flex flex-col">
            {/* CHAT MESSAGES */}
            <div className="flex-1 max-w-5xl mx-auto w-full space-y-4">
              {messages.map((msg, i) => {
@@ -355,10 +327,10 @@ function GroupChat() {
             </form>
            </div>
         </div>
-      ) : (
-        /* WHITEBOARD AREA */
+        
+      {/* WHITEBOARD AREA - COMMENTED OUT */}
+      {/* ) : (
         <div className="flex-1 relative bg-white overflow-hidden">
-            {/* Loading Overlay - shown while whiteboard is initializing */}
             {!whiteboardReady && (
                 <div className="absolute inset-0 z-50 flex items-center justify-center bg-gray-50/80 backdrop-blur-sm">
                     <div className="text-center">
@@ -367,8 +339,6 @@ function GroupChat() {
                     </div>
                 </div>
             )}
-            
-            {/* TLDRAW CONTAINER - Mount when socket connects, loading overlay hides until editor ready */}
             {isWhiteboardConnected && (
                 <div className="w-full h-full">
                     <Tldraw
@@ -381,7 +351,7 @@ function GroupChat() {
                 </div>
             )}
         </div>
-      )}
+      )} */}
     </div>
   );
 }
